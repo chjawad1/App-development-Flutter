@@ -34,9 +34,15 @@ class _DiceGameScreenState extends State<DiceGameScreen> {
   void _rollDice() {
     setState(() {
       _diceNumber = Random().nextInt(6) + 1;
+
       _scores[_currentPlayer - 1] += _diceNumber;
 
-      // Move to the next player
+      // If the player rolls six, give them another round
+      if (_diceNumber == 6) {
+        return; // Skip the player switch for another roll
+      }
+
+      // Move to the next player if no bonus turn is given
       if (_currentPlayer == 4) {
         _currentPlayer = 1;
         _currentRound++;
@@ -47,13 +53,13 @@ class _DiceGameScreenState extends State<DiceGameScreen> {
       // Check if the game is over
       if (_currentRound > _totalRounds) {
         _gameOver = true;
-        _showWinnerDialog();
+        _showFinalResults();
       }
     });
   }
 
-  // Function to display the winner dialog
-  void _showWinnerDialog() {
+  // Function to display the final results dialog
+  void _showFinalResults() {
     int highestScore = _scores.reduce(max);
     int winner = _scores.indexOf(highestScore) + 1;
 
@@ -62,7 +68,16 @@ class _DiceGameScreenState extends State<DiceGameScreen> {
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text('Game Over'),
-          content: Text('Player $winner wins with a score of $highestScore!'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('Final Scores:'),
+              for (int i = 0; i < 4; i++)
+                Text('Player ${i + 1}: ${_scores[i]}'),
+              SizedBox(height: 10),
+              Text('Player $winner wins with a score of $highestScore!'),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () {
