@@ -94,8 +94,8 @@ class _PlayerInputScreenState extends State<PlayerInputScreen> {
                     padding: const EdgeInsets.all(8.0),
                     child: Image.asset(
                       bottleImages[index],
-                      width: 80,
-                      height: 80,
+                      width: 100,
+                      height: 100,
                       color: selectedBottle == bottleImages[index]
                           ? Colors.blue
                           : null, // Highlight selected bottle

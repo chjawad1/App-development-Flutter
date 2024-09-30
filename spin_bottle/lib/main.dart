@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 void main() {
   runApp(SpinTheBottleApp());
 }
+
 
 class SpinTheBottleApp extends StatelessWidget {
   @override
@@ -10,8 +12,10 @@ class SpinTheBottleApp extends StatelessWidget {
     return MaterialApp(
       title: 'Spin the Bottle Game',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.purple,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
+      debugShowCheckedModeBanner: false,
       home: PlayerInputScreen(),
     );
   }
@@ -59,8 +63,9 @@ class _PlayerInputScreenState extends State<PlayerInputScreen> {
               controller: nameController,
               decoration: InputDecoration(
                 labelText: 'Player Name',
+                border: OutlineInputBorder(),
                 suffixIcon: IconButton(
-                  icon: Icon(Icons.add),
+                  icon: Icon(Icons.add, color: Colors.purple),
                   onPressed: addPlayer,
                 ),
               ),
@@ -72,14 +77,15 @@ class _PlayerInputScreenState extends State<PlayerInputScreen> {
               itemBuilder: (context, index) {
                 return ListTile(
                   title: Text(playerNames[index]),
+                  trailing: Icon(Icons.person, color: Colors.purple),
                 );
               },
             ),
           ),
           SizedBox(height: 20),
-          Text('Select a Bottle'),
+          Text('Select a Bottle', style: TextStyle(fontSize: 20)),
           Container(
-            height: 100,
+            height: 120,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: bottleImages.length,
@@ -92,13 +98,25 @@ class _PlayerInputScreenState extends State<PlayerInputScreen> {
                   },
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Image.asset(
-                      bottleImages[index],
-                      width: 100,
-                      height: 100,
-                      color: selectedBottle == bottleImages[index]
-                          ? Colors.blue
-                          : null, // Highlight selected bottle
+                    child: AnimatedContainer(
+                      duration: Duration(milliseconds: 300),
+                      decoration: BoxDecoration(
+                        border: selectedBottle == bottleImages[index]
+                            ? Border.all(color: Colors.purpleAccent, width: 4)
+                            : null,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 10,
+                          ),
+                        ],
+                      ),
+                      child: Image.asset(
+                        bottleImages[index],
+                        width: 100,
+                        height: 100,
+                      ),
                     ),
                   ),
                 );
@@ -106,13 +124,19 @@ class _PlayerInputScreenState extends State<PlayerInputScreen> {
             ),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              backgroundColor: Colors.purple, // background
+              foregroundColor: Colors.white, // foreground
+            ),
             onPressed: playerNames.isNotEmpty && selectedBottle != null
                 ? () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      BottleSpinScreen(players: playerNames, selectedBottle: selectedBottle!),
+                  builder: (context) => BottleSpinScreen(
+                      players: playerNames,
+                      selectedBottle: selectedBottle!),
                 ),
               );
             }
@@ -136,7 +160,8 @@ class BottleSpinScreen extends StatefulWidget {
   _BottleSpinScreenState createState() => _BottleSpinScreenState();
 }
 
-class _BottleSpinScreenState extends State<BottleSpinScreen> with SingleTickerProviderStateMixin {
+class _BottleSpinScreenState extends State<BottleSpinScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   double _angle = 0;
   bool _isSpinning = false;
@@ -153,13 +178,17 @@ class _BottleSpinScreenState extends State<BottleSpinScreen> with SingleTickerPr
   void spinBottle() {
     setState(() {
       _isSpinning = true;
-      _angle = (360 * 5) + (360 * (widget.players.length) * (1 + (DateTime.now().millisecond % 360) / 360));
+      _angle = (360 * 5) +
+          (360 *
+              (widget.players.length) *
+              (1 + (DateTime.now().millisecond % 360) / 360));
     });
 
     _controller.forward(from: 0).then((_) {
       setState(() {
         _isSpinning = false;
-        int selectedPlayer = (widget.players.length * ((_angle % 360) / 360)).floor();
+        int selectedPlayer =
+        (widget.players.length * ((_angle % 360) / 360)).floor();
         showChallenge(widget.players[selectedPlayer]);
       });
     });
@@ -194,7 +223,8 @@ class _BottleSpinScreenState extends State<BottleSpinScreen> with SingleTickerPr
               builder: (context, child) {
                 return Transform.rotate(
                   angle: _controller.value * _angle,
-                  child: Image.asset(widget.selectedBottle, width: 200, height: 200),
+                  child: Image.asset(widget.selectedBottle,
+                      width: 200, height: 200),
                 );
               },
             ),
@@ -265,8 +295,9 @@ class _ChallengeScreenState extends State<ChallengeScreen> {
               controller: challengeController,
               decoration: InputDecoration(
                 labelText: 'Add your own challenge',
+                border: OutlineInputBorder(),
                 suffixIcon: IconButton(
-                  icon: Icon(Icons.add),
+                  icon: Icon(Icons.add, color: Colors.purple),
                   onPressed: addCustomChallenge,
                 ),
               ),
