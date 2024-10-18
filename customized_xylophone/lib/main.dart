@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:audioplayers/audioplayers.dart';
+import 'xylophone_key.dart';
+import 'sound_manager.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
-void main() => runApp(XylophoneApp());
+void main() {
+  runApp(XylophoneApp());
+}
 
 class XylophoneApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'Customized Xylophone',
       home: XylophoneHomePage(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -19,54 +26,45 @@ class XylophoneHomePage extends StatefulWidget {
 }
 
 class _XylophoneHomePageState extends State<XylophoneHomePage> {
-  final player = AudioCache();  // Preload sounds using AudioCache
+  final SoundManager soundManager = SoundManager();
+
+  // Initial colors for the keys
   List<Color> keyColors = [
-    Colors.red, Colors.orange, Colors.yellow, Colors.green, Colors.teal, Colors.blue, Colors.purple
-  ];  // Initial colors for each key
+    Colors.red,
+    Colors.orange,
+    Colors.yellow,
+    Colors.green,
+    Colors.teal,
+    Colors.blue,
+    Colors.purple,
+  ];
 
-  List<int> soundNumbers = [1, 2, 3, 4, 5, 6, 7]; // Initial sound numbers for each key
+  // Initial sound files for the keys
+  List<String> soundFiles = List.generate(7, (index) => 'assets/note${index + 1}.wav');
 
-  void playSound(int soundNumber) {
-    player.play('note$soundNumber.wav');  // Playing sound
+  // Method to play sound when key is tapped
+  void playSound(String soundPath) async {
+    await soundManager.playSoundFromPath(soundPath); // Updated method name
   }
 
-  // Function to build a key
-  Expanded buildKey({required Color color, required int soundNumber}) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          playSound(soundNumber);  // Play the sound on key press
-          setState(() {
-            // Change visual feedback on tap, optional glow or color effect
-          });
-        },
-        child: AnimatedContainer(
-          duration: Duration(milliseconds: 200),
-          color: color,  // The selected color
-          child: null,  // Empty container for xylophone key
-        ),
-      ),
-    );
-  }
-
-  // Show color picker dialog to customize the key color
-  void openColorPicker(int index) async {
-    Color? selectedColor = await showDialog(
+  // Method to change the key color
+  void changeKeyColor(int index) async {
+    Color selectedColor = await showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Choose Color'),
+          title: Text('Pick a color for Key ${index + 1}'),
           content: SingleChildScrollView(
             child: BlockPicker(
               pickerColor: keyColors[index],
-              onColorChanged: (Color color) {
+              onColorChanged: (color) {
                 setState(() {
                   keyColors[index] = color;
                 });
               },
             ),
           ),
-          actions: <Widget>[
+          actions: [
             TextButton(
               child: Text('Done'),
               onPressed: () {
@@ -79,31 +77,24 @@ class _XylophoneHomePageState extends State<XylophoneHomePage> {
     );
   }
 
-  // Dropdown to change sound number
-  void changeSound(int index) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Choose Sound Number'),
-          content: DropdownButton<int>(
-            value: soundNumbers[index],
-            items: [1, 2, 3, 4, 5, 6, 7].map((int value) {
-              return DropdownMenuItem<int>(
-                value: value,
-                child: Text('Sound $value'),
-              );
-            }).toList(),
-            onChanged: (newValue) {
-              setState(() {
-                soundNumbers[index] = newValue!;
-              });
-              Navigator.of(context).pop();
-            },
-          ),
+  // Method to change sound file for the key
+  void changeSound(int index) async {
+    if (await Permission.storage.request().isGranted) {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.audio,
+        allowMultiple: false,
+      );
+
+      if (result != null && result.files.isNotEmpty) {
+        setState(() {
+          soundFiles[index] = result.files.single.path!;
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No sound file selected.')),
         );
-      },
-    );
+      }
+    }
   }
 
   @override
@@ -111,28 +102,23 @@ class _XylophoneHomePageState extends State<XylophoneHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Customized Xylophone'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.color_lens),
-            onPressed: () {
-              // Allow user to customize all key colors at once, if needed
-            },
-          ),
-        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: List.generate(7, (index) {
           return Expanded(
             child: GestureDetector(
-              onLongPress: () {
-                // Allow user to change key color and sound on long press
-                openColorPicker(index);
-                changeSound(index);
-              },
-              child: buildKey(
-                color: keyColors[index],
-                soundNumber: soundNumbers[index],
+              onTap: () => playSound(soundFiles[index]), // Tap to play sound
+              onLongPress: () => changeKeyColor(index), // Long press to change color
+              onDoubleTap: () => changeSound(index), // Double tap to change sound
+              child: Container(
+                color: keyColors[index], // Key color
+                child: Center(
+                  child: Text(
+                    'Key ${index + 1}',
+                    style: TextStyle(color: Colors.white, fontSize: 20),
+                  ),
+                ),
               ),
             ),
           );
