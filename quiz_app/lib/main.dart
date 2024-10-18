@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/animation.dart'; // For animations
-
-QuizBrain quizBrain = QuizBrain();
+import 'package:flutter/animation.dart';
 
 void main() => runApp(QuizApp());
 
@@ -14,8 +12,8 @@ class QuizApp extends StatelessWidget {
       ),
       debugShowCheckedModeBanner: false,
       theme: ThemeData.light().copyWith(
-        scaffoldBackgroundColor: Colors.grey, // Light background
-        primaryColor: Colors.blueGrey, // Theme accent color
+        scaffoldBackgroundColor: Colors.grey[400],
+        primaryColor: Colors.blueAccent,
       ),
     );
   }
@@ -29,18 +27,21 @@ class Quiz {
 
 class QuizBrain {
   int _questionIndex = 0;
-  List<Quiz> _questionBank = [
-    Quiz(questionText: 'Flutter is a framework?', answer: true),
-    Quiz(questionText: 'Flutter uses Dart language?', answer: true),
-    Quiz(questionText: 'The capital of France is Berlin?', answer: false),
-    Quiz(questionText: 'The square root of 64 is 8?', answer: true),
-    Quiz(questionText: 'Mount Everest is the highest mountain in the world?', answer: true),
-    Quiz(questionText: 'The human body has four lungs?', answer: false),
-    Quiz(questionText: 'Sharks are mammals?', answer: false),
-    Quiz(questionText: 'The Great Wall of China is visible from space?', answer: false),
-    Quiz(questionText: 'Lightning never strikes in the same place twice?', answer: false),
-    Quiz(questionText: 'Sound travels faster than light?', answer: false),
-  ];
+  List<Quiz> _questionBank = [];
+
+  void addQuestion(String questionText, bool answer) {
+    _questionBank.add(Quiz(questionText: questionText, answer: answer));
+  }
+
+  void editQuestion(int index, String newText, bool newAnswer) {
+    if (index >= 0 && index < _questionBank.length) {
+      _questionBank[index] = Quiz(questionText: newText, answer: newAnswer);
+    }
+  }
+
+  List<Quiz> getQuestions() {
+    return _questionBank;
+  }
 
   String getQuestion() {
     return _questionBank[_questionIndex].questionText;
@@ -63,6 +64,10 @@ class QuizBrain {
   void reset() {
     _questionIndex = 0;
   }
+
+  int getTotalQuestions() {
+    return _questionBank.length;
+  }
 }
 
 class QuizPage extends StatefulWidget {
@@ -71,28 +76,31 @@ class QuizPage extends StatefulWidget {
 }
 
 class _QuizPageState extends State<QuizPage> with SingleTickerProviderStateMixin {
+  final QuizBrain quizBrain = QuizBrain();
   List<Icon> scoreKeeper = [];
   int score = 0;
   bool isQuizStarted = false;
-  int timer = 5;
-  bool isQuizFinished = false; // To prevent score update after quiz finishes
-  bool isButtonDisabled = false; // To disable buttons once quiz is done
+  int timer = 10;
+  bool isQuizFinished = false;
+  bool isButtonDisabled = false;
+  TextEditingController questionController = TextEditingController();
+  TextEditingController answerController = TextEditingController();
+  int editIndex = -1; // To track the question being edited
 
-  // Animation variables
   late AnimationController _controller;
   late Animation<Offset> _offsetAnimation;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: Duration(milliseconds: 500));
+    _controller = AnimationController(vsync: this, duration: Duration(milliseconds: 1000));
     _offsetAnimation = Tween<Offset>(begin: Offset.zero, end: Offset(0.1, 0))
         .chain(CurveTween(curve: Curves.elasticIn))
         .animate(_controller);
   }
 
   void checkAnswer(bool userPickedAnswer) {
-    if (isQuizFinished || isButtonDisabled) return; // Prevent further interaction if quiz is finished
+    if (isQuizFinished || isButtonDisabled) return;
 
     bool correctAnswer = quizBrain.getAnswer();
     setState(() {
@@ -101,7 +109,7 @@ class _QuizPageState extends State<QuizPage> with SingleTickerProviderStateMixin
         score++;
       } else {
         scoreKeeper.add(Icon(Icons.close, color: Colors.red, size: 30));
-        shakeAnimation(); // Trigger shake animation for wrong answers
+        shakeAnimation();
       }
 
       if (quizBrain.isFinished()) {
@@ -109,7 +117,7 @@ class _QuizPageState extends State<QuizPage> with SingleTickerProviderStateMixin
         showResult();
       } else {
         quizBrain.nextQuestion();
-        timer = 5;
+        timer = 10;
         startTimer();
       }
     });
@@ -124,25 +132,25 @@ class _QuizPageState extends State<QuizPage> with SingleTickerProviderStateMixin
   void startQuiz() {
     setState(() {
       isQuizStarted = true;
-      score = 0; // Reset score
-      scoreKeeper.clear(); // Clear previous score icons
-      quizBrain.reset(); // Reset quiz
-      timer = 5; // Reset timer
-      isQuizFinished = false; // Reset quiz finished flag
-      isButtonDisabled = false; // Enable buttons again
-      startTimer(); // Start timer
+      score = 0;
+      scoreKeeper.clear();
+      quizBrain.reset();
+      timer = 10;
+      isQuizFinished = false;
+      isButtonDisabled = false;
+      startTimer();
     });
   }
 
   void startTimer() {
-    if (!isQuizFinished) { // Ensure timer doesn't run after quiz is over
+    if (!isQuizFinished) {
       Future.delayed(Duration(seconds: 1), () {
         setState(() {
           if (timer > 0 && !isQuizFinished) {
             timer--;
             startTimer();
           } else if (timer == 0 && !isQuizFinished) {
-            checkAnswer(false); // Timeout, move to next question
+            checkAnswer(false);
           }
         });
       });
@@ -155,7 +163,7 @@ class _QuizPageState extends State<QuizPage> with SingleTickerProviderStateMixin
       builder: (BuildContext context) {
         return AlertDialog(
           title: Text("Quiz Completed!", style: TextStyle(color: Colors.blueAccent)),
-          content: Text("Your score is $score/10", style: TextStyle(fontSize: 18)),
+          content: Text("Your score is $score/${quizBrain.getTotalQuestions()}", style: TextStyle(fontSize: 18)),
           actions: [
             TextButton(
               child: Text("Restart", style: TextStyle(color: Colors.green)),
@@ -164,12 +172,60 @@ class _QuizPageState extends State<QuizPage> with SingleTickerProviderStateMixin
                   quizBrain.reset();
                   scoreKeeper.clear();
                   score = 0;
-                  timer = 5;
+                  timer = 10;
                   isQuizStarted = false;
-                  isQuizFinished = false; // Reset flag
-                  isButtonDisabled = false; // Re-enable buttons
+                  isQuizFinished = false;
+                  isButtonDisabled = false;
                   Navigator.of(context).pop();
                 });
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void editQuestion(int index) {
+    setState(() {
+      editIndex = index;
+      questionController.text = quizBrain.getQuestions()[index].questionText;
+      answerController.text = quizBrain.getQuestions()[index].answer.toString();
+    });
+  }
+
+  void showQuestions() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Added Questions"),
+          content: Container(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: quizBrain.getQuestions().length,
+              itemBuilder: (context, index) {
+                final question = quizBrain.getQuestions()[index];
+                return ListTile(
+                  title: Text(question.questionText),
+                  subtitle: Text('Answer: ${question.answer}'),
+                  trailing: IconButton(
+                    icon: Icon(Icons.edit, color: Colors.blue),
+                    onPressed: () {
+                      editQuestion(index);
+                      Navigator.pop(context);
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: Text("Close", style: TextStyle(color: Colors.red)),
+              onPressed: () {
+                Navigator.pop(context);
               },
             ),
           ],
@@ -182,10 +238,9 @@ class _QuizPageState extends State<QuizPage> with SingleTickerProviderStateMixin
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Quiz App'),
-        centerTitle: true, // Align the title to the center
+        title: Text('Customizable Quiz App'),
+        centerTitle: true,
       ),
-      backgroundColor: Colors.grey,
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 10.0),
         child: isQuizStarted
@@ -196,7 +251,7 @@ class _QuizPageState extends State<QuizPage> with SingleTickerProviderStateMixin
             Text(
               'Time Left: $timer seconds',
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 20.0, color: Colors.white),
+              style: TextStyle(fontSize: 20.0, color: Colors.black),
             ),
             Expanded(
               child: Center(
@@ -216,13 +271,10 @@ class _QuizPageState extends State<QuizPage> with SingleTickerProviderStateMixin
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.lightGreen, // Updated color parameter
+                        backgroundColor: Colors.lightGreen,
                         padding: EdgeInsets.symmetric(vertical: 10.0),
                       ),
-                      child: Text(
-                        'True',
-                        style: TextStyle(fontSize: 20.0, color: Colors.white),
-                      ),
+                      child: Text('True', style: TextStyle(fontSize: 20.0, color: Colors.white)),
                       onPressed: () {
                         checkAnswer(true);
                       },
@@ -232,13 +284,10 @@ class _QuizPageState extends State<QuizPage> with SingleTickerProviderStateMixin
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.orangeAccent, // Updated color parameter
+                        backgroundColor: Colors.orangeAccent,
                         padding: EdgeInsets.symmetric(vertical: 10.0),
                       ),
-                      child: Text(
-                        'False',
-                        style: TextStyle(fontSize: 20.0, color: Colors.white),
-                      ),
+                      child: Text('False', style: TextStyle(fontSize: 20.0, color: Colors.white)),
                       onPressed: () {
                         checkAnswer(false);
                       },
@@ -254,18 +303,51 @@ class _QuizPageState extends State<QuizPage> with SingleTickerProviderStateMixin
             ),
           ],
         )
-            : Center(
-          child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blueAccent, // Updated color parameter
-              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+            : Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextField(
+              controller: questionController,
+              decoration: InputDecoration(
+                hintText: 'Enter Question',
+                border: OutlineInputBorder(),
+              ),
             ),
-            onPressed: startQuiz,
-            child: Text(
-              'Start Quiz',
-              style: TextStyle(fontSize: 20.0, color: Colors.white),
+            SizedBox(height: 10),
+            TextField(
+              controller: answerController,
+              decoration: InputDecoration(
+                hintText: 'Enter Answer (true/false)',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.text,
             ),
-          ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: () {
+                bool answer = answerController.text.toLowerCase() == 'true';
+                if (editIndex == -1) {
+                  quizBrain.addQuestion(questionController.text, answer);
+                } else {
+                  quizBrain.editQuestion(editIndex, questionController.text, answer);
+                  editIndex = -1;
+                }
+                questionController.clear();
+                answerController.clear();
+              },
+              child: Text(editIndex == -1 ? 'Add Question' : 'Save Changes'),
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: showQuestions,
+              child: Text('Show Added Questions'),
+            ),
+            SizedBox(height: 10),
+            ElevatedButton(
+              onPressed: startQuiz,
+              child: Text('Start Quiz'),
+            ),
+          ],
         ),
       ),
     );
