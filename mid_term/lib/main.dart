@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import 'db_helper.dart';
+import 'task_page.dart';
+import 'task_form.dart';
+import 'notification_service.dart';
 
-void main() => runApp(TaskManagerApp());
+void main() {
+  runApp(TaskManagerApp());
+}
 
 class TaskManagerApp extends StatelessWidget {
   @override
@@ -26,12 +30,17 @@ class TaskHomePage extends StatefulWidget {
 }
 
 class _TaskHomePageState extends State<TaskHomePage> {
-  late Future<List<Map<String, dynamic>>> tasks;
+  int _selectedIndex = 0;
+  static List<Widget> _taskPages = <Widget>[
+    TodayTaskPage(),
+    CompletedTaskPage(),
+    RepeatedTaskPage(),
+  ];
 
-  @override
-  void initState() {
-    super.initState();
-    tasks = DBHelper.instance.fetchTasks();
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
   }
 
   @override
@@ -39,38 +48,29 @@ class _TaskHomePageState extends State<TaskHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Task Manager'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () {},
+          ),
+        ],
       ),
-      body: FutureBuilder(
-        future: tasks,
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return Center(child: CircularProgressIndicator());
-          }
-          final taskList = snapshot.data as List<Map<String, dynamic>>;
-          return ListView.builder(
-            itemCount: taskList.length,
-            itemBuilder: (context, index) {
-              final task = taskList[index];
-              return ListTile(
-                title: Text(task['title']),
-                subtitle: Text(task['description'] ?? ''),
-                trailing: IconButton(
-                  icon: Icon(Icons.delete),
-                  onPressed: () {
-                    DBHelper.instance.deleteTask(task['id']);
-                    setState(() {
-                      tasks = DBHelper.instance.fetchTasks();
-                    });
-                  },
-                ),
-              );
-            },
-          );
-        },
+      body: _taskPages[_selectedIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.today), label: "Today"),
+          BottomNavigationBarItem(icon: Icon(Icons.check_circle), label: "Completed"),
+          BottomNavigationBarItem(icon: Icon(Icons.repeat), label: "Repeated"),
+        ],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // Navigate to TaskForm to add a new task
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => TaskForm()),
+          );
         },
         child: Icon(Icons.add),
       ),
