@@ -1,4 +1,4 @@
-package com.example.mid_term
+package com.example.task_management
 
 import io.flutter.embedding.android.FlutterActivity
 

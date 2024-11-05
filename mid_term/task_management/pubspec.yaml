@@ -1,4 +1,4 @@
-name: mid_term
+name: task_management
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -30,12 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  sqflite: ^2.2.0
-  path_provider: ^2.0.14
-  flutter_local_notifications: ^12.0.4
-  csv: ^5.0.0
-  pdf: ^3.6.0
-  share: ^2.0.4
+  sqflite: ^2.2.1
+  path_provider: ^2.0.11
 
 
   # The following adds the Cupertino Icons font to your application.
