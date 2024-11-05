@@ -20,6 +20,7 @@ class TaskManagerApp extends StatelessWidget {
         brightness: Brightness.dark,
       ),
       home: TaskHomePage(),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
