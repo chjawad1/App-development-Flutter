@@ -14,6 +14,14 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   bool _isRepeated = false;
 
   Future<void> _addTask() async {
+    if (_titleController.text.isEmpty) {
+      // Show an error if title is empty
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Please enter a task title")),
+      );
+      return;
+    }
+
     final db = await DatabaseHelper().database;
     await db.insert('tasks', {
       'title': _titleController.text,
@@ -22,7 +30,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       'status': 'pending',
       'isRepeated': _isRepeated ? 1 : 0,
     });
-    Navigator.pop(context);
+
+    Navigator.pop(context); // Close screen after task is added
   }
 
   @override
