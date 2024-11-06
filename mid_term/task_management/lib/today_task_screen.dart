@@ -46,6 +46,26 @@ class _TodayTaskScreenState extends State<TodayTaskScreen> {
     _loadTasks(); // Refresh task list after adding a task
   }
 
+  Future<void> _editTask(Map<String, dynamic> task) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddTaskScreen(task: task), // Pass the existing task for editing
+      ),
+    );
+    _loadTasks(); // Refresh task list after editing
+  }
+
+  Future<void> _deleteTask(int id) async {
+    final db = await DatabaseHelper().database;
+    await db.delete(
+      'tasks',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    _loadTasks(); // Refresh task list after deletion
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -53,14 +73,28 @@ class _TodayTaskScreenState extends State<TodayTaskScreen> {
       body: ListView.builder(
         itemCount: _tasks.length,
         itemBuilder: (context, index) {
+          final task = _tasks[index];
           return ListTile(
-            title: Text(_tasks[index]['title']),
-            subtitle: Text(_tasks[index]['description']),
-            trailing: IconButton(
-              icon: Icon(Icons.check),
-              onPressed: () {
-                _markTaskAsCompleted(_tasks[index]['id']);
-              },
+            title: Text(task['title']),
+            subtitle: Text(task['description']),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.edit),
+                  onPressed: () => _editTask(task), // Edit task
+                ),
+                IconButton(
+                  icon: Icon(Icons.delete),
+                  onPressed: () => _deleteTask(task['id']), // Delete task
+                ),
+                IconButton(
+                  icon: Icon(Icons.check),
+                  onPressed: () {
+                    _markTaskAsCompleted(task['id']);
+                  },
+                ),
+              ],
             ),
           );
         },

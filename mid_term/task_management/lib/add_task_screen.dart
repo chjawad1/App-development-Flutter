@@ -1,86 +1,110 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'database_helper.dart';
 
 class AddTaskScreen extends StatefulWidget {
+  final Map<String, dynamic>? task; // Add this parameter to accept a task for editing
+
+  AddTaskScreen({this.task});
+
   @override
   _AddTaskScreenState createState() => _AddTaskScreenState();
 }
 
 class _AddTaskScreenState extends State<AddTaskScreen> {
-  final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
+  final _titleController = TextEditingController();
+  final _descriptionController = TextEditingController();
   DateTime? _dueDate;
-  bool _isRepeated = false;
 
-  Future<void> _addTask() async {
-    if (_titleController.text.isEmpty) {
-      // Show an error if title is empty
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Please enter a task title")),
+  @override
+  void initState() {
+    super.initState();
+    if (widget.task != null) {
+      // Populate fields if editing an existing task
+      _titleController.text = widget.task!['title'] ?? '';
+      _descriptionController.text = widget.task!['description'] ?? '';
+      _dueDate = DateTime.tryParse(widget.task!['dueDate']);
+    }
+  }
+
+  Future<void> _saveTask() async {
+    final title = _titleController.text;
+    final description = _descriptionController.text;
+    final db = await DatabaseHelper().database;
+
+    if (widget.task == null) {
+      // Insert new task
+      await db.insert('tasks', {
+        'title': title,
+        'description': description,
+        'dueDate': _dueDate?.toIso8601String(),
+        'status': 'pending'
+      });
+    } else {
+      // Update existing task
+      await db.update(
+        'tasks',
+        {
+          'title': title,
+          'description': description,
+          'dueDate': _dueDate?.toIso8601String(),
+          'status': 'pending'
+        },
+        where: 'id = ?',
+        whereArgs: [widget.task!['id']],
       );
-      return;
     }
 
-    final db = await DatabaseHelper().database;
-    await db.insert('tasks', {
-      'title': _titleController.text,
-      'description': _descriptionController.text,
-      'dueDate': _dueDate != null ? _dueDate.toString() : null,
-      'status': 'pending',
-      'isRepeated': _isRepeated ? 1 : 0,
-    });
+    Navigator.pop(context); // Return to previous screen
+  }
 
-    Navigator.pop(context); // Close screen after task is added
+  void _pickDueDate() async {
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: _dueDate ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+
+    if (pickedDate != null) {
+      setState(() {
+        _dueDate = pickedDate;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Add Task')),
+      appBar: AppBar(
+        title: Text(widget.task == null ? 'Add Task' : 'Edit Task'), // Update title based on action
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             TextField(
               controller: _titleController,
-              decoration: InputDecoration(labelText: 'Title'),
+              decoration: InputDecoration(labelText: 'Task Title'),
             ),
             TextField(
               controller: _descriptionController,
-              decoration: InputDecoration(labelText: 'Description'),
+              decoration: InputDecoration(labelText: 'Task Description'),
             ),
-            ListTile(
-              title: Text('Due Date'),
-              subtitle: Text(
-                _dueDate != null ? DateFormat.yMd().format(_dueDate!) : 'Not Set',
-              ),
-              onTap: () async {
-                DateTime? selectedDate = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime.now(),
-                  lastDate: DateTime(2100),
-                );
-                if (selectedDate != null) {
-                  setState(() {
-                    _dueDate = selectedDate;
-                  });
-                }
-              },
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Text(_dueDate == null ? 'Select Due Date' : 'Due Date: ${_dueDate.toString()}'),
+                Spacer(),
+                ElevatedButton(
+                  onPressed: _pickDueDate,
+                  child: Text('Pick Date'),
+                ),
+              ],
             ),
-            CheckboxListTile(
-              title: Text("Repeat Task"),
-              value: _isRepeated,
-              onChanged: (bool? value) {
-                setState(() {
-                  _isRepeated = value ?? false;
-                });
-              },
-            ),
+            Spacer(),
             ElevatedButton(
-              onPressed: _addTask,
-              child: Text('Add Task'),
+              onPressed: _saveTask,
+              child: Text(widget.task == null ? 'Add Task' : 'Update Task'), // Button text changes based on action
             ),
           ],
         ),
