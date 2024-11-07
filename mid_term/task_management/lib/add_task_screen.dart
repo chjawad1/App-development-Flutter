@@ -46,19 +46,19 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       'title': _titleController.text,
       'description': _descriptionController.text,
       'dueDate': _dueDate != null ? _dueDate.toString() : null,
+
       'status': 'pending',
       'isRepeated': _isRepeated ? 1 : 0,
     };
 
     if (widget.task != null) {
       await db.update('tasks', taskData, where: 'id = ?', whereArgs: [widget.task!['id']]);
-      await showNotification("Task Updated", "The task '${_titleController.text}' was updated.");
     } else {
       await db.insert('tasks', taskData);
-      await showNotification("Task Added", "The task '${_titleController.text}' was added.");
     }
 
     if (_dueDate != null && _dueTime != null) {
+      // Combine _dueDate and _dueTime for scheduling
       DateTime scheduledDate = DateTime(
         _dueDate!.year,
         _dueDate!.month,
@@ -72,6 +72,8 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
         _titleController.text,
         "Task is due on ${DateFormat.yMd().add_jm().format(scheduledDate)}",
       );
+    } else {
+      await showNotification(_titleController.text, "Task added successfully");
     }
 
     Navigator.pop(context);
@@ -87,14 +89,16 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     );
     var notificationDetails = NotificationDetails(android: androidDetails);
 
+    // Convert to TZDateTime
     tz.TZDateTime tzScheduledDate = tz.TZDateTime.from(scheduledDate, tz.local);
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000, // Unique notification ID
+      0, // Notification ID
       title,
       body,
       tzScheduledDate,
       notificationDetails,
+
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );
@@ -111,7 +115,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     const NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
 
     await flutterLocalNotificationsPlugin.show(
-      DateTime.now().millisecondsSinceEpoch ~/ 1000, // Unique notification ID
+      0, // Notification ID
       title,
       body,
       platformDetails,

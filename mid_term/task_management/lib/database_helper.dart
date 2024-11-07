@@ -29,6 +29,7 @@ class DatabaseHelper {
             title TEXT,
             description TEXT,
             dueDate TEXT,
+            dueTime TEXT,
             status TEXT,
             repeatDaily INTEGER,         -- 1 if task is set to repeat daily, 0 otherwise
             selectedDays TEXT             -- Comma-separated days if task repeats on specific days (e.g., "Mon,Wed,Fri")
@@ -39,6 +40,7 @@ class DatabaseHelper {
         if (oldVersion < 2) {
           await db.execute("ALTER TABLE tasks ADD COLUMN repeatDaily INTEGER DEFAULT 0");
           await db.execute("ALTER TABLE tasks ADD COLUMN selectedDays TEXT");
+          await db.execute('ALTER TABLE tasks ADD COLUMN dueTime TEXT');
         }
       },
     );

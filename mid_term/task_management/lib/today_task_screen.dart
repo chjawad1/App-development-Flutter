@@ -1,12 +1,31 @@
 import 'package:flutter/material.dart';
 import 'database_helper.dart';
 import 'add_task_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class TodayTaskScreen extends StatefulWidget {
   @override
   _TodayTaskScreenState createState() => _TodayTaskScreenState();
 }
+class ThemeProvider extends ChangeNotifier {
+  ThemeMode _themeMode = ThemeMode.system;
 
+  ThemeMode get themeMode => _themeMode;
+
+  Future<void> toggleTheme(bool isDarkMode) async {
+    _themeMode = isDarkMode ? ThemeMode.dark : ThemeMode.light;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDarkMode', isDarkMode);
+  }
+
+  Future<void> loadThemePreference() async {
+    final prefs = await SharedPreferences.getInstance();
+    bool? isDarkMode = prefs.getBool('isDarkMode');
+    _themeMode = isDarkMode == true ? ThemeMode.dark : ThemeMode.light;
+    notifyListeners();
+  }
+}
 class _TodayTaskScreenState extends State<TodayTaskScreen> {
   List<Map<String, dynamic>> _tasks = [];
 
@@ -76,7 +95,7 @@ class _TodayTaskScreenState extends State<TodayTaskScreen> {
                   color: Colors.blueAccent,
                 ),
               ),
-              subtitle: Text(task['description']),
+              subtitle: Text('${task['description']}\nDue: ${task['dueDate']} at ${task['dueTime'] ?? 'Not set'}',),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
