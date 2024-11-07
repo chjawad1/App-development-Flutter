@@ -21,7 +21,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'tasks.db');
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE tasks (
@@ -40,7 +40,7 @@ class DatabaseHelper {
         if (oldVersion < 2) {
           await db.execute("ALTER TABLE tasks ADD COLUMN repeatDaily INTEGER DEFAULT 0");
           await db.execute("ALTER TABLE tasks ADD COLUMN selectedDays TEXT");
-          await db.execute('ALTER TABLE tasks ADD COLUMN dueTime TEXT');
+
         }
       },
     );
@@ -60,12 +60,22 @@ class DatabaseHelper {
     final db = await database;
     return await db.query(
       'tasks',
-      where: 'repeatDaily = 1 OR selectedDays IS NOT NULL',
+      where: 'isRepeated = 1',
     );
   }
 
   Future<void> updateTask(int id, Map<String, dynamic> task) async {
     final db = await database;
+    if (task['dueDate'] != null && task['dueTime'] != null) {
+      DateTime combinedDateTime = DateTime(
+        task['dueDate'].year,
+        task['dueDate'].month,
+        task['dueDate'].day,
+        task['dueTime'].hour,
+        task['dueTime'].minute,
+      );
+      task['dueDate'] = combinedDateTime.toString();  // Save combined DateTime as string
+    }
     await db.update('tasks', task, where: 'id = ?', whereArgs: [id]);
   }
 

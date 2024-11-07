@@ -1,4 +1,3 @@
-// Your imports remain the same
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'database_helper.dart';
@@ -40,13 +39,24 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       );
       return;
     }
-
     final db = await DatabaseHelper().database;
+    // Combine the selected due date and time into a single DateTime object
+    DateTime? combinedDateTime;
+    if (_dueDate != null && _dueTime != null) {
+      combinedDateTime = DateTime(
+        _dueDate!.year,
+        _dueDate!.month,
+        _dueDate!.day,
+        _dueTime!.hour,
+        _dueTime!.minute,
+      );
+    }
+
+
     final taskData = {
       'title': _titleController.text,
       'description': _descriptionController.text,
-      'dueDate': _dueDate != null ? _dueDate.toString() : null,
-
+      'dueDate': combinedDateTime?.toString(),
       'status': 'pending',
       'isRepeated': _isRepeated ? 1 : 0,
     };
@@ -57,20 +67,12 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       await db.insert('tasks', taskData);
     }
 
-    if (_dueDate != null && _dueTime != null) {
-      // Combine _dueDate and _dueTime for scheduling
-      DateTime scheduledDate = DateTime(
-        _dueDate!.year,
-        _dueDate!.month,
-        _dueDate!.day,
-        _dueTime!.hour,
-        _dueTime!.minute,
-      );
-
+    // Schedule notification only if both due date and time are selected
+    if (combinedDateTime != null) {
       await _scheduleNotification(
-        scheduledDate,
+        combinedDateTime,
         _titleController.text,
-        "Task is due on ${DateFormat.yMd().add_jm().format(scheduledDate)}",
+        "Task is due on ${DateFormat.yMd().add_jm().format(combinedDateTime)}",
       );
     } else {
       await showNotification(_titleController.text, "Task added successfully");
@@ -79,7 +81,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     Navigator.pop(context);
   }
 
-  Future<void> _scheduleNotification(DateTime scheduledDate, String title, String body) async {
+  Future<void> _scheduleNotification(DateTime combinedDateTime, String title, String body) async {
     var androidDetails = AndroidNotificationDetails(
       'task_channel',
       'Task Notifications',
@@ -90,7 +92,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     var notificationDetails = NotificationDetails(android: androidDetails);
 
     // Convert to TZDateTime
-    tz.TZDateTime tzScheduledDate = tz.TZDateTime.from(scheduledDate, tz.local);
+    tz.TZDateTime tzScheduledDate = tz.TZDateTime.from(combinedDateTime, tz.local);
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
       0, // Notification ID
@@ -98,7 +100,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       body,
       tzScheduledDate,
       notificationDetails,
-
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );

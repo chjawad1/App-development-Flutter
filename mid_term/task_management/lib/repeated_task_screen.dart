@@ -7,7 +7,7 @@ class RepeatedTaskScreen extends StatefulWidget {
 }
 
 class _RepeatedTaskScreenState extends State<RepeatedTaskScreen> {
-  List<Map<String, dynamic>> _repeatedTasks = [];
+  late Future<List<Map<String, dynamic>>> _repeatedTasks;
 
   @override
   void initState() {
@@ -15,30 +15,49 @@ class _RepeatedTaskScreenState extends State<RepeatedTaskScreen> {
     _loadRepeatedTasks();
   }
 
-  Future<void> _loadRepeatedTasks() async {
-    final db = await DatabaseHelper().database;
-    List<Map<String, dynamic>> tasks = await db.query(
-      'tasks',
-      where: 'repeatDaily = ? OR selectedDays != ?',
-      whereArgs: [1, ''],
-    );
+  void _loadRepeatedTasks() {
+    _repeatedTasks = DatabaseHelper().getRepeatedTasks();
+  }
 
-    setState(() {
-      _repeatedTasks = tasks;
-    });
+  // Function that gets triggered when the icon is clicked
+  void _onRepeatIconClick(Map<String, dynamic> task) {
+    // You can define the action you want here
+    // For example, navigate to the task details or mark the task as done
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Repeat icon clicked for task: ${task['title']}")),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Repeated Tasks")),
-      body: ListView.builder(
-        itemCount: _repeatedTasks.length,
-        itemBuilder: (context, index) {
-          final task = _repeatedTasks[index];
-          return ListTile(
-            title: Text(task['title']),
-            subtitle: Text(task['description']),
+      appBar: AppBar(title: Text('Repeated Tasks')),
+      body: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _repeatedTasks,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(child: Text('No repeated tasks found.'));
+          }
+
+          final tasks = snapshot.data!;
+
+          return ListView.builder(
+            itemCount: tasks.length,
+            itemBuilder: (context, index) {
+              final task = tasks[index];
+              return ListTile(
+                title: Text(task['title']),
+                subtitle: Text('Due: ${task['dueDate']}'),
+                trailing: IconButton(
+                  icon: Icon(Icons.repeat),
+                  onPressed: () => _onRepeatIconClick(task), // Trigger action on click
+                ),
+              );
+            },
           );
         },
       ),
