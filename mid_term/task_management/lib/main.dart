@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'today_task_screen.dart';
 import 'completed_task_screen.dart';
 import 'repeated_task_screen.dart';
+import 'add_task_screen.dart';
 
 void main() => runApp(TaskManagementApp());
 
@@ -26,7 +27,6 @@ class _MainScreenState extends State<MainScreen> {
     TodayTaskScreen(),
     CompletedTaskScreen(),
     RepeatedTaskScreen(),
-
   ];
 
   void _onItemTapped(int index) {
@@ -56,6 +56,15 @@ class _MainScreenState extends State<MainScreen> {
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddTaskScreen()),
+          );
+        },
+        child: Icon(Icons.add),
       ),
     );
   }

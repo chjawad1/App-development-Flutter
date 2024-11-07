@@ -24,7 +24,6 @@ class _TodayTaskScreenState extends State<TodayTaskScreen> {
       whereArgs: ['pending'],
     );
 
-    // Filter out predefined tasks if they exist by ID or other criteria
     tasks = tasks.where((task) => task['id'] != 0).toList();
 
     setState(() {
@@ -34,26 +33,25 @@ class _TodayTaskScreenState extends State<TodayTaskScreen> {
 
   Future<void> _markTaskAsCompleted(int id) async {
     await DatabaseHelper().markAsCompleted(id);
-    _loadTasks(); // Refresh task list
+    _loadTasks();
   }
 
-  // Method to navigate to Add Task screen and refresh tasks on return
   void _navigateToAddTaskScreen() async {
     await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => AddTaskScreen()),
     );
-    _loadTasks(); // Refresh task list after adding a task
+    _loadTasks();
   }
 
   Future<void> _editTask(Map<String, dynamic> task) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => AddTaskScreen(task: task), // Pass the existing task for editing
+        builder: (context) => AddTaskScreen(task: task),
       ),
     );
-    _loadTasks(); // Refresh task list after editing
+    _loadTasks();
   }
 
   Future<void> _deleteTask(int id) async {
@@ -63,7 +61,7 @@ class _TodayTaskScreenState extends State<TodayTaskScreen> {
       where: 'id = ?',
       whereArgs: [id],
     );
-    _loadTasks(); // Refresh task list after deletion
+    _loadTasks();
   }
 
   @override
@@ -82,11 +80,11 @@ class _TodayTaskScreenState extends State<TodayTaskScreen> {
               children: [
                 IconButton(
                   icon: Icon(Icons.edit),
-                  onPressed: () => _editTask(task), // Edit task
+                  onPressed: () => _editTask(task),
                 ),
                 IconButton(
                   icon: Icon(Icons.delete),
-                  onPressed: () => _deleteTask(task['id']), // Delete task
+                  onPressed: () => _deleteTask(task['id']),
                 ),
                 IconButton(
                   icon: Icon(Icons.check),
