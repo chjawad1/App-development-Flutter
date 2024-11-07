@@ -24,10 +24,8 @@ class _TodayTaskScreenState extends State<TodayTaskScreen> {
       whereArgs: ['pending'],
     );
 
-    tasks = tasks.where((task) => task['id'] != 0).toList();
-
     setState(() {
-      _tasks = tasks;
+      _tasks = tasks.where((task) => task['id'] != 0).toList();
     });
   }
 
@@ -47,59 +45,63 @@ class _TodayTaskScreenState extends State<TodayTaskScreen> {
   Future<void> _editTask(Map<String, dynamic> task) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => AddTaskScreen(task: task),
-      ),
+      MaterialPageRoute(builder: (context) => AddTaskScreen(task: task)),
     );
     _loadTasks();
   }
 
   Future<void> _deleteTask(int id) async {
     final db = await DatabaseHelper().database;
-    await db.delete(
-      'tasks',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
     _loadTasks();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Today's Tasks")),
+      appBar: AppBar(
+        title: Text("Today's Tasks"),
+      ),
       body: ListView.builder(
         itemCount: _tasks.length,
         itemBuilder: (context, index) {
           final task = _tasks[index];
-          return ListTile(
-            title: Text(task['title']),
-            subtitle: Text(task['description']),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(Icons.edit),
-                  onPressed: () => _editTask(task),
+          return Card(
+            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+            child: ListTile(
+              title: Text(
+                task['title'],
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueAccent,
                 ),
-                IconButton(
-                  icon: Icon(Icons.delete),
-                  onPressed: () => _deleteTask(task['id']),
-                ),
-                IconButton(
-                  icon: Icon(Icons.check),
-                  onPressed: () {
-                    _markTaskAsCompleted(task['id']);
-                  },
-                ),
-              ],
+              ),
+              subtitle: Text(task['description']),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(Icons.edit, color: Colors.green),
+                    onPressed: () => _editTask(task),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete, color: Colors.red),
+                    onPressed: () => _deleteTask(task['id']),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.check, color: Colors.blue),
+                    onPressed: () => _markTaskAsCompleted(task['id']),
+                  ),
+                ],
+              ),
             ),
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: _navigateToAddTaskScreen,
-        child: Icon(Icons.add),
+        label: Text("Add Task"),
+        icon: Icon(Icons.add),
       ),
     );
   }

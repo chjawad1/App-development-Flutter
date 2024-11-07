@@ -1,9 +1,13 @@
+// Your imports remain the same
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'database_helper.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'main.dart';
+import 'package:timezone/timezone.dart' as tz;
 
 class AddTaskScreen extends StatefulWidget {
-  final Map<String, dynamic>? task; // Optional parameter for editing
+  final Map<String, dynamic>? task;
 
   AddTaskScreen({this.task});
 
@@ -21,16 +25,11 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   @override
   void initState() {
     super.initState();
-
-    // If editing, initialize fields with existing task details
     if (widget.task != null) {
       _titleController.text = widget.task!['title'];
       _descriptionController.text = widget.task!['description'];
-      _dueDate = DateTime.tryParse(widget.task!['dueDate'] ?? '');
+      _dueDate = DateTime.parse(widget.task!['dueDate']);
       _isRepeated = widget.task!['isRepeated'] == 1;
-      if (_dueDate != null) {
-        _dueTime = TimeOfDay.fromDateTime(_dueDate!);
-      }
     }
   }
 
@@ -42,66 +41,81 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       return;
     }
 
-    DateTime? dueDateTime;
+    final db = await DatabaseHelper().database;
+    final taskData = {
+      'title': _titleController.text,
+      'description': _descriptionController.text,
+      'dueDate': _dueDate != null ? _dueDate.toString() : null,
+      'status': 'pending',
+      'isRepeated': _isRepeated ? 1 : 0,
+    };
+
+    if (widget.task != null) {
+      await db.update('tasks', taskData, where: 'id = ?', whereArgs: [widget.task!['id']]);
+      await showNotification("Task Updated", "The task '${_titleController.text}' was updated.");
+    } else {
+      await db.insert('tasks', taskData);
+      await showNotification("Task Added", "The task '${_titleController.text}' was added.");
+    }
+
     if (_dueDate != null && _dueTime != null) {
-      dueDateTime = DateTime(
+      DateTime scheduledDate = DateTime(
         _dueDate!.year,
         _dueDate!.month,
         _dueDate!.day,
         _dueTime!.hour,
         _dueTime!.minute,
       );
-    }
 
-    final db = await DatabaseHelper().database;
-    final taskData = {
-      'title': _titleController.text,
-      'description': _descriptionController.text,
-      'dueDate': dueDateTime != null ? dueDateTime.toIso8601String() : null,
-      'status': 'pending',
-      'isRepeated': _isRepeated ? 1 : 0,
-    };
-
-    if (widget.task == null) {
-      // Insert new task
-      await db.insert('tasks', taskData);
-    } else {
-      // Update existing task
-      await db.update(
-        'tasks',
-        taskData,
-        where: 'id = ?',
-        whereArgs: [widget.task!['id']],
+      await _scheduleNotification(
+        scheduledDate,
+        _titleController.text,
+        "Task is due on ${DateFormat.yMd().add_jm().format(scheduledDate)}",
       );
     }
 
-    Navigator.pop(context); // Close screen after task is added or updated
+    Navigator.pop(context);
   }
 
-  Future<void> _pickDate() async {
-    DateTime? selectedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2100),
+  Future<void> _scheduleNotification(DateTime scheduledDate, String title, String body) async {
+    var androidDetails = AndroidNotificationDetails(
+      'task_channel',
+      'Task Notifications',
+      channelDescription: 'Notifications for tasks due today',
+      importance: Importance.high,
+      priority: Priority.high,
     );
-    if (selectedDate != null) {
-      setState(() {
-        _dueDate = selectedDate;
-      });
-    }
+    var notificationDetails = NotificationDetails(android: androidDetails);
+
+    tz.TZDateTime tzScheduledDate = tz.TZDateTime.from(scheduledDate, tz.local);
+
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000, // Unique notification ID
+      title,
+      body,
+      tzScheduledDate,
+      notificationDetails,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
+    );
   }
 
-  Future<void> _pickTime() async {
-    TimeOfDay? selectedTime = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
+  Future<void> showNotification(String title, String body) async {
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'task_channel',
+      'Task Notifications',
+      channelDescription: 'Notifications for tasks',
+      importance: Importance.high,
+      priority: Priority.high,
     );
-    if (selectedTime != null) {
-      setState(() {
-        _dueTime = selectedTime;
-      });
-    }
+    const NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
+
+    await flutterLocalNotificationsPlugin.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000, // Unique notification ID
+      title,
+      body,
+      platformDetails,
+    );
   }
 
   @override
@@ -122,17 +136,35 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             ),
             ListTile(
               title: Text('Due Date'),
-              subtitle: Text(
-                _dueDate != null ? DateFormat.yMd().format(_dueDate!) : 'Not Set',
-              ),
-              onTap: _pickDate,
+              subtitle: Text(_dueDate != null ? DateFormat.yMd().format(_dueDate!) : 'Not Set'),
+              onTap: () async {
+                DateTime? selectedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime(2100),
+                );
+                if (selectedDate != null) {
+                  setState(() {
+                    _dueDate = selectedDate;
+                  });
+                }
+              },
             ),
             ListTile(
               title: Text('Due Time'),
-              subtitle: Text(
-                _dueTime != null ? _dueTime!.format(context) : 'Not Set',
-              ),
-              onTap: _pickTime,
+              subtitle: Text(_dueTime != null ? _dueTime!.format(context) : 'Not Set'),
+              onTap: () async {
+                TimeOfDay? selectedTime = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay.now(),
+                );
+                if (selectedTime != null) {
+                  setState(() {
+                    _dueTime = selectedTime;
+                  });
+                }
+              },
             ),
             CheckboxListTile(
               title: Text("Repeat Task"),
