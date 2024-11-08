@@ -19,13 +19,22 @@ class _RepeatedTaskScreenState extends State<RepeatedTaskScreen> {
     _repeatedTasks = DatabaseHelper().getRepeatedTasks();
   }
 
-  // Function that gets triggered when the icon is clicked
-  void _onRepeatIconClick(Map<String, dynamic> task) {
-    // You can define the action you want here
-    // For example, navigate to the task details or mark the task as done
+  // Function that gets triggered when the repeat icon is clicked
+  Future<void> _onRepeatIconClick(Map<String, dynamic> task) async {
+    // Toggle repeat status or update due date based on repeat interval
+    bool isTaskRepeated = task['isRepeated'] == 1; // Assuming 1 means "repeat enabled"
+
+    // Update task repeat status in the database
+    await DatabaseHelper().updateTaskRepeatStatus(task['id'], !isTaskRepeated);
+
+    // Show confirmation
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Repeat icon clicked for task: ${task['title']}")),
+      SnackBar(content: Text(isTaskRepeated ? "Task set to non-repeating." : "Task set to repeat.")),
     );
+
+    // Refresh the list of tasks after change
+    _loadRepeatedTasks();
+    setState(() {}); // Rebuild UI to reflect changes
   }
 
   @override
@@ -49,12 +58,15 @@ class _RepeatedTaskScreenState extends State<RepeatedTaskScreen> {
             itemCount: tasks.length,
             itemBuilder: (context, index) {
               final task = tasks[index];
+              bool isTaskRepeated = task['isRepeated'] == 1; // Assuming 1 means repeat is enabled
+
               return ListTile(
                 title: Text(task['title']),
                 subtitle: Text('Due: ${task['dueDate']}'),
                 trailing: IconButton(
-                  icon: Icon(Icons.repeat),
+                  icon: Icon(isTaskRepeated ? Icons.repeat : Icons.repeat_one),
                   onPressed: () => _onRepeatIconClick(task), // Trigger action on click
+                  color: isTaskRepeated ? Colors.blue : Colors.grey, // Color based on repeat status
                 ),
               );
             },

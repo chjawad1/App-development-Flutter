@@ -93,4 +93,14 @@ class DatabaseHelper {
       whereArgs: [id],
     );
   }
+  Future<void> updateTaskRepeatStatus(int taskId, bool isRepeated) async {
+    final db = await database;
+    await db.update(
+      'tasks',
+      {'isRepeated': isRepeated ? 1 : 0},
+      where: 'id = ?',
+      whereArgs: [taskId],
+    );
+  }
+
 }

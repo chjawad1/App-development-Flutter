@@ -60,7 +60,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       'title': _titleController.text,
       'description': _descriptionController.text,
       'dueDate': combinedDateTime?.toString(),
-      
+
       'status': 'pending',
       'isRepeated': _isRepeated ? 1 : 0,
     };

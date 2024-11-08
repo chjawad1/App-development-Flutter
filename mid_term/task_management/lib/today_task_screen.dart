@@ -4,6 +4,10 @@ import 'add_task_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
 
 class TodayTaskScreen extends StatefulWidget {
   @override
@@ -80,14 +84,12 @@ class _TodayTaskScreenState extends State<TodayTaskScreen> {
     });
   }
 
-  // Start a timer to periodically check for overdue tasks
   void _startOverdueCheck() {
     _timer = Timer.periodic(Duration(minutes: 1), (timer) {
       _checkForOverdueTasks();
     });
   }
 
-  // Check if any tasks are overdue and update them to 'completed' if so
   Future<void> _checkForOverdueTasks() async {
     final now = DateTime.now();
     final db = await DatabaseHelper().database;
@@ -110,16 +112,42 @@ class _TodayTaskScreenState extends State<TodayTaskScreen> {
       }
     }
 
-    _loadTasks(); // Refresh task list after moving overdue tasks to "completed"
+    _loadTasks();
   }
 
-  // Mark task as completed
+  Future<void> _exportToPDF() async {
+    final pdf = pw.Document();
+    pdf.addPage(
+      pw.Page(
+        build: (pw.Context context) => pw.ListView.builder(
+          itemCount: _tasks.length,
+          itemBuilder: (context, index) {
+            final task = _tasks[index];
+            return pw.Container(
+              padding: pw.EdgeInsets.symmetric(vertical: 5),
+              child: pw.Text(
+                "Title: ${task['title']}\nDescription: ${task['description']}\nDue: ${task['dueDate'] ?? 'N/A'} at ${task['dueTime'] ?? 'N/A'}",
+                style: pw.TextStyle(fontSize: 12),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+
+    final directory = await getApplicationDocumentsDirectory();
+    final path = '${directory.path}/tasks.pdf';
+    final file = File(path);
+    await file.writeAsBytes(await pdf.save());
+
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Tasks exported to PDF at $path')));
+  }
+
   Future<void> _markTaskAsCompleted(int id) async {
     await DatabaseHelper().markAsCompleted(id);
     _loadTasks();
   }
 
-  // Navigate to add task screen
   void _navigateToAddTaskScreen() async {
     await Navigator.push(
       context,
@@ -128,7 +156,6 @@ class _TodayTaskScreenState extends State<TodayTaskScreen> {
     _loadTasks();
   }
 
-  // Edit task
   Future<void> _editTask(Map<String, dynamic> task) async {
     await Navigator.push(
       context,
@@ -137,7 +164,6 @@ class _TodayTaskScreenState extends State<TodayTaskScreen> {
     _loadTasks();
   }
 
-  // Delete task
   Future<void> _deleteTask(int id) async {
     final db = await DatabaseHelper().database;
     await db.delete('tasks', where: 'id = ?', whereArgs: [id]);
@@ -158,7 +184,11 @@ class _TodayTaskScreenState extends State<TodayTaskScreen> {
         actions: [
           IconButton(
             icon: Icon(Icons.refresh),
-            onPressed: _loadTasks, // Refreshes the task list
+            onPressed: _loadTasks,
+          ),
+          IconButton(
+            icon: Icon(Icons.download),
+            onPressed: _exportToPDF,
           ),
         ],
       ),
