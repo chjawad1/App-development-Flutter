@@ -3,6 +3,7 @@ import 'database_helper.dart';
 import 'add_task_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class TodayTaskScreen extends StatefulWidget {
   @override
@@ -32,12 +33,38 @@ class ThemeProvider extends ChangeNotifier {
 class _TodayTaskScreenState extends State<TodayTaskScreen> {
   List<Map<String, dynamic>> _tasks = [];
   Timer? _timer;
+  FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 
   @override
   void initState() {
     super.initState();
+    _initializeNotifications();
     _loadTasks();
     _startOverdueCheck();
+  }
+
+  Future<void> _initializeNotifications() async {
+    flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+    const AndroidInitializationSettings androidSettings =
+    AndroidInitializationSettings('@mipmap/ic_launcher');
+    const InitializationSettings initSettings =
+    InitializationSettings(android: androidSettings);
+    await flutterLocalNotificationsPlugin?.initialize(initSettings);
+  }
+
+  Future<void> _showNotification(String title, String body) async {
+    const AndroidNotificationDetails androidDetails =
+    AndroidNotificationDetails('channel_id', 'Tasks Channel',
+        importance: Importance.max, priority: Priority.high);
+    const NotificationDetails generalNotificationDetails =
+    NotificationDetails(android: androidDetails);
+
+    await flutterLocalNotificationsPlugin?.show(
+      0,
+      title,
+      body,
+      generalNotificationDetails,
+    );
   }
 
   Future<void> _loadTasks() async {
@@ -68,12 +95,16 @@ class _TodayTaskScreenState extends State<TodayTaskScreen> {
     for (var task in _tasks) {
       if (task['dueDate'] != null) {
         DateTime dueDate = DateTime.parse(task['dueDate']);
-        if (dueDate.isBefore(now)) {
+        if (dueDate.isBefore(now) && task['status'] == 'pending') {
           await db.update(
             'tasks',
             {'status': 'completed'},
             where: 'id = ?',
             whereArgs: [task['id']],
+          );
+          await _showNotification(
+            'Task Overdue',
+            'Your task "${task['title']}" is now overdue.',
           );
         }
       }
