@@ -29,6 +29,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       _descriptionController.text = widget.task!['description'];
       _dueDate = DateTime.parse(widget.task!['dueDate']);
       _isRepeated = widget.task!['isRepeated'] == 1;
+      _dueTime = TimeOfDay(
+          hour: _dueDate!.hour,
+          minute: _dueDate!.minute,);
     }
   }
 
@@ -57,14 +60,17 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
       'title': _titleController.text,
       'description': _descriptionController.text,
       'dueDate': combinedDateTime?.toString(),
+      
       'status': 'pending',
       'isRepeated': _isRepeated ? 1 : 0,
     };
 
     if (widget.task != null) {
       await db.update('tasks', taskData, where: 'id = ?', whereArgs: [widget.task!['id']]);
+      await showNotification("Task Updated", "The task '${_titleController.text}' was updated.");
     } else {
       await db.insert('tasks', taskData);
+      await showNotification("Task Added", "The task '${_titleController.text}' was added.");
     }
 
     // Schedule notification only if both due date and time are selected

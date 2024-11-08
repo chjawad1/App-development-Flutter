@@ -21,7 +21,7 @@ class DatabaseHelper {
     String path = join(await getDatabasesPath(), 'tasks.db');
     return await openDatabase(
       path,
-      version: 2,
+      version: 1,
       onCreate: (db, version) async {
         await db.execute('''
           CREATE TABLE tasks (

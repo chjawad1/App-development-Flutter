@@ -75,11 +75,18 @@ class _TodayTaskScreenState extends State<TodayTaskScreen> {
     _loadTasks();
   }
 
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("Today's Tasks"),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.refresh),
+            onPressed: _loadTasks, // Call _loadTasks to refresh the task list
+          ),
+        ],
       ),
       body: ListView.builder(
         itemCount: _tasks.length,
@@ -95,7 +102,7 @@ class _TodayTaskScreenState extends State<TodayTaskScreen> {
                   color: Colors.blueAccent,
                 ),
               ),
-              subtitle: Text('${task['description']}\nDue: ${task['dueDate']} at ${task['dueTime'] ?? 'Not set'}',),
+              subtitle: Text('${task['description']}\nDue: ${task['dueDate']} at ${task['dueTime'] ?? 'Time set'}',),
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
