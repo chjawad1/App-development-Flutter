@@ -32,45 +32,48 @@ class _BMICalculatorScreenState extends State<BMICalculatorScreen> {
             child: Row(
               children: <Widget>[
                 Expanded(
-                  child: Container(
-                    // Replace null with your widget
-                    color: Colors.red,
+                  child: repeatcontainercode(
+                    colors: Color(0xFF1D1E33),
                   ),
                 ),
                 Expanded(
-                  child: Container(
-                    // Replace null with your widget
-                    color: Colors.blue,
-                  ),
+                  child: repeatcontainercode(colors: Color(0xFF1D1E33),),
                 ),
               ],
             ),
           ),
           Expanded(
-            child: Container(
-              // Replace null with your widget
-              color: Colors.green,
-            ),
+            child: repeatcontainercode(colors: Color(0xFF1D1E33),),
           ),
           Expanded(
             child: Row(
               children: <Widget>[
                 Expanded(
-                  child: Container(
-                    // Replace null with your widget
-                    color: Colors.yellow,
-                  ),
+                  child: repeatcontainercode(colors: Colors.blue),
                 ),
                 Expanded(
-                  child: Container(
-                    // Replace null with your widget
-                    color: Colors.orange,
-                  ),
+                  child: repeatcontainercode(colors: Color(0xFF1D1E33),),
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class repeatcontainercode extends StatelessWidget {
+  repeatcontainercode({required this.colors});
+ final Color colors;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: EdgeInsets.all(15.0),
+      decoration: BoxDecoration(
+        color: colors,
+        borderRadius: BorderRadius.circular(10.0)
+
       ),
     );
   }
