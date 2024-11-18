@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+/// Enum for Gender with added clarity
 enum Gender { male, female }
 
 class InputPage extends StatefulWidget {
@@ -8,18 +9,39 @@ class InputPage extends StatefulWidget {
 }
 
 class _InputPageState extends State<InputPage> {
-  Gender? selectGender;
+  Gender? selectedGender;
 
   final Color activeColor = Color(0xFF1D1E33);
-  final Color deActiveColor = Color(0xFF111328);
-  final TextStyle labelStyle = TextStyle(
-    fontSize: 18.0,
-    color: Color(0xFF8D8E98),
-  );
+  final Color inactiveColor = Color(0xFF111328);
 
-  /// Returns the color based on gender selection
-  Color getColor(Gender gender) {
-    return selectGender == gender ? activeColor : deActiveColor;
+  
+  Color getGenderColor(Gender gender) {
+    return selectedGender == gender ? activeColor : inactiveColor;
+  }
+
+
+  IconData genderToIcon(Gender gender) {
+    return gender == Gender.male ? Icons.male : Icons.female;
+  }
+  String genderToLabel(Gender gender) {
+    return gender == Gender.male ? "MALE" : "FEMALE";
+  }
+
+
+  Widget buildGenderCard(Gender gender) {
+    return RepeatContainerCode(
+      colors: getGenderColor(gender),
+      onPressed: () {
+        setState(() {
+          selectedGender = gender;
+        });
+      },
+      cardWidget: CardWidget(
+        iconData: genderToIcon(gender),
+        label: genderToLabel(gender),
+        isActive: selectedGender == gender,
+      ),
+    );
   }
 
   @override
@@ -33,36 +55,8 @@ class _InputPageState extends State<InputPage> {
           Expanded(
             child: Row(
               children: [
-                Expanded(
-                  child: RepeatContainerCode(
-                    colors: getColor(Gender.male),
-                    onPressed: () {
-                      setState(() {
-                        selectGender = Gender.male;
-                      });
-                    },
-                    cardWidget: CardWidget(
-                      iconData: Icons.male,
-                      label: "MALE",
-                      isActive: selectGender == Gender.male,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: RepeatContainerCode(
-                    colors: getColor(Gender.female),
-                    onPressed: () {
-                      setState(() {
-                        selectGender = Gender.female;
-                      });
-                    },
-                    cardWidget: CardWidget(
-                      iconData: Icons.female,
-                      label: "FEMALE",
-                      isActive: selectGender == Gender.female,
-                    ),
-                  ),
-                ),
+                Expanded(child: buildGenderCard(Gender.male)),
+                Expanded(child: buildGenderCard(Gender.female)),
               ],
             ),
           ),
