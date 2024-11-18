@@ -12,6 +12,15 @@ class _InputPageState extends State<InputPage> {
 
   final Color activeColor = Color(0xFF1D1E33);
   final Color deActiveColor = Color(0xFF111328);
+  final TextStyle labelStyle = TextStyle(
+    fontSize: 18.0,
+    color: Color(0xFF8D8E98),
+  );
+
+  /// Returns the color based on gender selection
+  Color getColor(Gender gender) {
+    return selectGender == gender ? activeColor : deActiveColor;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +35,7 @@ class _InputPageState extends State<InputPage> {
               children: [
                 Expanded(
                   child: RepeatContainerCode(
-                    colors: selectGender == Gender.male ? activeColor : deActiveColor,
+                    colors: getColor(Gender.male),
                     onPressed: () {
                       setState(() {
                         selectGender = Gender.male;
@@ -35,12 +44,13 @@ class _InputPageState extends State<InputPage> {
                     cardWidget: CardWidget(
                       iconData: Icons.male,
                       label: "MALE",
+                      isActive: selectGender == Gender.male,
                     ),
                   ),
                 ),
                 Expanded(
                   child: RepeatContainerCode(
-                    colors: selectGender == Gender.female ? activeColor : deActiveColor,
+                    colors: getColor(Gender.female),
                     onPressed: () {
                       setState(() {
                         selectGender = Gender.female;
@@ -49,6 +59,7 @@ class _InputPageState extends State<InputPage> {
                     cardWidget: CardWidget(
                       iconData: Icons.female,
                       label: "FEMALE",
+                      isActive: selectGender == Gender.female,
                     ),
                   ),
                 ),
@@ -122,10 +133,15 @@ class RepeatContainerCode extends StatelessWidget {
 }
 
 class CardWidget extends StatelessWidget {
-  const CardWidget({required this.iconData, required this.label});
+  const CardWidget({
+    required this.iconData,
+    required this.label,
+    required this.isActive,
+  });
 
   final IconData iconData;
   final String label;
+  final bool isActive;
 
   @override
   Widget build(BuildContext context) {
@@ -135,13 +151,14 @@ class CardWidget extends StatelessWidget {
         Icon(
           iconData,
           size: 80.0,
+          color: isActive ? Colors.blueAccent : Colors.white,
         ),
         SizedBox(height: 15.0),
         Text(
           label,
           style: TextStyle(
             fontSize: 18.0,
-            color: Color(0xFF8D8E98),
+            color: isActive ? Colors.blueAccent : Color(0xFF8D8E98),
           ),
         ),
       ],
