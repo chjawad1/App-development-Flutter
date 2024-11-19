@@ -16,7 +16,6 @@ class card_widget extends StatelessWidget {
       ),
       Text(
         label,
-        style: klabelstyle,
       )
     ]);
   }

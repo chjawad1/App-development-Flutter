@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Enum for Gender with added clarity
+/// Enum for Gender
 enum Gender { male, female }
 
 class InputPage extends StatefulWidget {
@@ -9,37 +9,36 @@ class InputPage extends StatefulWidget {
 }
 
 class _InputPageState extends State<InputPage> {
-  Gender? selectedGender;
+  Gender? selectedGender; // Holds the currently selected gender
 
   final Color activeColor = Color(0xFF1D1E33);
   final Color inactiveColor = Color(0xFF111328);
 
-  
-  Color getGenderColor(Gender gender) {
-    return selectedGender == gender ? activeColor : inactiveColor;
-  }
+  /// Uses ternary operator to determine the appropriate color
+  Color getGenderColor(Gender gender) =>
+      selectedGender == gender ? activeColor : inactiveColor;
 
+  /// Maps Gender enum to corresponding icons using ternary operator
+  IconData genderToIcon(Gender gender) =>
+      gender == Gender.male ? Icons.male : Icons.female;
 
-  IconData genderToIcon(Gender gender) {
-    return gender == Gender.male ? Icons.male : Icons.female;
-  }
-  String genderToLabel(Gender gender) {
-    return gender == Gender.male ? "MALE" : "FEMALE";
-  }
+  /// Maps Gender enum to corresponding labels using ternary operator
+  String genderToLabel(Gender gender) =>
+      gender == Gender.male ? "MALE" : "FEMALE";
 
-
+  /// Builds a gender selection card using the above utilities
   Widget buildGenderCard(Gender gender) {
     return RepeatContainerCode(
-      colors: getGenderColor(gender),
+      colors: getGenderColor(gender), // Determines card color
       onPressed: () {
         setState(() {
-          selectedGender = gender;
+          selectedGender = gender; // Updates selected gender
         });
       },
       cardWidget: CardWidget(
-        iconData: genderToIcon(gender),
-        label: genderToLabel(gender),
-        isActive: selectedGender == gender,
+        iconData: genderToIcon(gender), // Icon mapped using ternary
+        label: genderToLabel(gender),  // Label mapped using ternary
+        isActive: selectedGender == gender, // Activates based on selection
       ),
     );
   }
@@ -99,6 +98,7 @@ class _InputPageState extends State<InputPage> {
   }
 }
 
+/// Reusable container widget for gender cards
 class RepeatContainerCode extends StatelessWidget {
   const RepeatContainerCode({
     required this.colors,
@@ -126,6 +126,7 @@ class RepeatContainerCode extends StatelessWidget {
   }
 }
 
+/// Card widget for gender selection
 class CardWidget extends StatelessWidget {
   const CardWidget({
     required this.iconData,
@@ -145,14 +146,14 @@ class CardWidget extends StatelessWidget {
         Icon(
           iconData,
           size: 80.0,
-          color: isActive ? Colors.blueAccent : Colors.white,
+          color: isActive ? Colors.blueAccent : Colors.white, // Ternary for color
         ),
         SizedBox(height: 15.0),
         Text(
           label,
           style: TextStyle(
             fontSize: 18.0,
-            color: isActive ? Colors.blueAccent : Color(0xFF8D8E98),
+            color: isActive ? Colors.blueAccent : Color(0xFF8D8E98), // Ternary for text color
           ),
         ),
       ],
