@@ -9,6 +9,17 @@ class climate extends StatefulWidget {
 class _climateState extends State<climate> {
   @override
   Widget build(BuildContext context) {
-    return const Placeholder();
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('ClimateApp'),
+        backgroundColor: Colors.red,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.menu),
+            onPressed: ()=>print('Clicked'),
+          )
+        ],
+      ),
+    );
   }
 }
