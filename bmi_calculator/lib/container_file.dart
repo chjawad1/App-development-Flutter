@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
 
+/// Reusable container widget for gender cards
 class RepeatContainerCode extends StatelessWidget {
-  RepeatContainerCode({
+  const RepeatContainerCode({
     required this.colors,
     this.cardWidget,
-    this.onPressed
+    this.onPressed,
   });
+
   final Color colors;
   final Widget? cardWidget;
   final VoidCallback? onPressed;
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onPressed,
+      onTap: onPressed, // Centralized tap functionality
       child: Container(
         margin: EdgeInsets.all(15.0),
         child: cardWidget,
