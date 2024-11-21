@@ -5,6 +5,7 @@ void main() {
   runApp(MaterialApp(
 title: 'climate',
     home: climate(),
+    debugShowCheckedModeBanner: false,
   ));
 }
 

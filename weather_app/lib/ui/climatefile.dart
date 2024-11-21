@@ -20,6 +20,17 @@ class _climateState extends State<climate> {
           )
         ],
       ),
+      body: Stack(
+        children: [
+          Center(
+            child: Image(image: AssetImage('images/image2.jpeg'),
+              height: 1200.0,
+              width: 590.0,
+              fit: BoxFit.fill,
+            )
+          )
+        ],
+      ),
     );
   }
 }
