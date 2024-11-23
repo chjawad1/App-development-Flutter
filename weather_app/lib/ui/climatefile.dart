@@ -28,9 +28,25 @@ class _climateState extends State<climate> {
               width: 590.0,
               fit: BoxFit.fill,
             )
-          )
+          ),
+          Container(
+            alignment: Alignment.topRight,
+            margin:  EdgeInsets.fromLTRB(0.0, 10.9,20.9,0.0),
+            child:Text(
+                'Vehari',
+              style: cityStyle(),
+            ),
+          ),
         ],
       ),
     );
   }
+}
+
+TextStyle cityStyle() {
+  return TextStyle(
+    color: Colors.white,
+    fontSize: 22.9,
+    fontStyle: FontStyle.italic,
+  );
 }
