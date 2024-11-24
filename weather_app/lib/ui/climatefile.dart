@@ -23,7 +23,7 @@ class _climateState extends State<climate> {
       body: Stack(
         children: [
           Center(
-            child: Image(image: AssetImage('images/image2.jpeg'),
+            child: Image(image: AssetImage('images/umbrella.jpeg'),
               height: 1200.0,
               width: 590.0,
               fit: BoxFit.fill,
@@ -37,6 +37,18 @@ class _climateState extends State<climate> {
               style: cityStyle(),
             ),
           ),
+          Center(
+              child: Image(image: AssetImage('images/lightrain.png'),
+              )
+          ),
+          Container(
+
+            margin:  EdgeInsets.fromLTRB(30.0, 390.0,20.9,0.0),
+            child:Text(
+              '50.32F',
+              style: tempStyle()
+            ),
+          ),
         ],
       ),
     );
@@ -48,5 +60,13 @@ TextStyle cityStyle() {
     color: Colors.white,
     fontSize: 22.9,
     fontStyle: FontStyle.italic,
+  );
+}
+TextStyle tempStyle(){
+  return TextStyle(
+    color: Colors.white,
+    fontStyle: FontStyle.normal,
+    fontWeight: FontWeight.w500,
+    fontSize: 49.9
   );
 }
