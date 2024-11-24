@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import '../utils/apifile.dart';
+import '../utils/apifile.dart' as util;
 class climate extends StatefulWidget {
   const climate({super.key});
 
@@ -54,6 +54,11 @@ class _climateState extends State<climate> {
         ],
       ),
     );
+  }
+  Future <Map> getWeather(String appId, String city)async{
+    String apiUrl =
+       ' https://api.openweathermap.org/data/2.5/weather?q=$city&appid='
+    '${util.apiId}&units=imperial';
   }
 }
 
