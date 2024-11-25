@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'container_file.dart';
+import 'constantfile.dart'; // Import constants file
+import 'container_file.dart'; // Import reusable widgets
+
 /// Enum for Gender
 enum Gender { male, female }
 
@@ -9,34 +11,16 @@ class InputPage extends StatefulWidget {
 }
 
 class _InputPageState extends State<InputPage> {
-  Gender? selectedGender; // Holds the currently selected gender
+  Gender? selectedGender;
+  double height = 170.0; // Default height value in cm
 
-  final Color activeColor = Color(0xFF1D1E33);
-  final Color inactiveColor = Color(0xFF111328);
-
-  // Function object to handle gender selection and state updates
+  // Function object for handling gender selection
   void Function()? onGenderTap(Gender gender) {
     return () {
       setState(() {
         selectedGender = gender;
       });
     };
-  }
-
-
-  Color getGenderColor(Gender gender) =>
-      selectedGender == gender ? activeColor : inactiveColor;
-
-  Widget buildGenderCard(Gender gender) {
-    return RepeatContainerCode(
-      colors: getGenderColor(gender), // Determines card color
-      onPressed: onGenderTap(gender), // Handles tap functionality
-      cardWidget: CardWidget(
-        iconData: gender == Gender.male ? Icons.male : Icons.female,
-        label: gender == Gender.male ? "MALE" : "FEMALE",
-        isActive: selectedGender == gender,
-      ),
-    );
   }
 
   @override
@@ -50,17 +34,91 @@ class _InputPageState extends State<InputPage> {
           Expanded(
             child: Row(
               children: [
-                Expanded(child: buildGenderCard(Gender.male)),
-                Expanded(child: buildGenderCard(Gender.female)),
+                Expanded(
+                  child: RepeatContainerCode(
+                    colors: selectedGender == Gender.male
+                        ? kActiveCardColor
+                        : kInactiveCardColor,
+                    onPressed: onGenderTap(Gender.male),
+                    cardWidget: CardWidget(
+                      iconData: Icons.male,
+                      label: "MALE",
+                      isActive: selectedGender == Gender.male,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: RepeatContainerCode(
+                    colors: selectedGender == Gender.female
+                        ? kActiveCardColor
+                        : kInactiveCardColor,
+                    onPressed: onGenderTap(Gender.female),
+                    cardWidget: CardWidget(
+                      iconData: Icons.female,
+                      label: "FEMALE",
+                      isActive: selectedGender == Gender.female,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
+          // Slider for height selection
           Expanded(
-            child: Container(
-              margin: EdgeInsets.all(15.0),
-              decoration: BoxDecoration(
-                color: Color(0xFF1D1E33),
-                borderRadius: BorderRadius.circular(10.0),
+            child: RepeatContainerCode(
+              colors: kActiveCardColor,
+              cardWidget: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text(
+                    "HEIGHT",
+                    style: TextStyle(
+                      fontSize: 18.0,
+                      color: Color(0xFF8D8E98),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        height.toStringAsFixed(1),
+                        style: const TextStyle(
+                          fontSize: 50.0,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const Text(
+                        " cm",
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          color: Color(0xFF8D8E98),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      activeTrackColor: Colors.white,
+                      inactiveTrackColor: const Color(0xFF8D8E98),
+                      thumbColor: Colors.pink,
+                      overlayColor: Colors.pink.withOpacity(0.2),
+                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 15.0),
+                      overlayShape: const RoundSliderOverlayShape(overlayRadius: 20.0),
+                    ),
+                    child: Slider(
+                      value: height,
+                      min: 100.0,
+                      max: 220.0,
+                      onChanged: (newHeight) {
+                        setState(() {
+                          height = newHeight;
+                        });
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -69,18 +127,18 @@ class _InputPageState extends State<InputPage> {
               children: [
                 Expanded(
                   child: Container(
-                    margin: EdgeInsets.all(15.0),
+                    margin: const EdgeInsets.all(15.0),
                     decoration: BoxDecoration(
-                      color: Color(0xFF1D1E33),
+                      color: kActiveCardColor,
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
                 ),
                 Expanded(
                   child: Container(
-                    margin: EdgeInsets.all(15.0),
+                    margin: const EdgeInsets.all(15.0),
                     decoration: BoxDecoration(
-                      color: Color(0xFF1D1E33),
+                      color: kActiveCardColor,
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
@@ -90,43 +148,6 @@ class _InputPageState extends State<InputPage> {
           ),
         ],
       ),
-    );
-  }
-}
-
-
-
-/// Card widget for gender selection
-class CardWidget extends StatelessWidget {
-  const CardWidget({
-    required this.iconData,
-    required this.label,
-    required this.isActive,
-  });
-
-  final IconData iconData;
-  final String label;
-  final bool isActive;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(
-          iconData,
-          size: 80.0,
-          color: isActive ? Colors.blueAccent : Colors.white, // Active color
-        ),
-        SizedBox(height: 15.0),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 18.0,
-            color: isActive ? Colors.blueAccent : Color(0xFF8D8E98), // Active label color
-          ),
-        ),
-      ],
     );
   }
 }
