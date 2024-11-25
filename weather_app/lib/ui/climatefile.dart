@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import '../utils/apifile.dart' as util;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -12,78 +11,47 @@ class climate extends StatefulWidget {
 }
 
 class _climateState extends State<climate> {
-  void showStuff() async {
-    Map data = await getWeather(util.apiId, util.defaultCity);
-    print(data.toString());
-  }
+  String cityName = util.defaultCity; // Holds the selected city name
+  final TextEditingController cityController = TextEditingController(); // For city input
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('ClimateApp'),
-        backgroundColor: Colors.red,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.menu),
-            onPressed: () => showStuff(),
-          )
-        ],
-      ),
-      body: Stack(
-        children: [
-          Center(
-              child: Image(image: AssetImage('images/umbrella.jpeg'),
-                height: 1200.0,
-                width: 590.0,
-                fit: BoxFit.fill,
-              )
-          ),
-          Container(
-            alignment: Alignment.topRight,
-            margin: EdgeInsets.fromLTRB(0.0, 10.9, 20.9, 0.0),
-            child: Text(
-              'Vehari',
-              style: cityStyle(),
-            ),
-          ),
-          Center(
-              child: Image(image: AssetImage('images/lightrain.png'),
-              )
-          ),
-          Container(
-
-            margin: EdgeInsets.fromLTRB(30.0, 390.0, 20.9, 0.0),
-            child: updateTempWidget('Lahore'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future <Map> getWeather(String appId, String city) async {
+  Future<Map<String, dynamic>> getWeather(String appId, String city) async {
     String apiUrl =
-        ' https://api.openweathermap.org/data/2.5/weather?q=$city&appid=''${util
-        .apiId}&units=imperial';
-    http.Response response = await http.get(Uri.parse(apiUrl));
-    return json.decode(response.body);
+        'https://api.openweathermap.org/data/2.5/weather?q=$city&appid=$appId&units=imperial';
+    try {
+      http.Response response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Failed to load weather data: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Failed to fetch weather data: $e');
+    }
   }
 
   Widget updateTempWidget(String city) {
-    return FutureBuilder(
-      future: getWeather(util.apiId, city.isEmpty ? util.defaultCity : city),
-      builder: (BuildContext context, AsyncSnapshot<Map> snapshot) {
-        if (snapshot.hasData) {
-          Map content = snapshot.data!;
+    return FutureBuilder<Map<String, dynamic>>(
+      future: getWeather(util.apiId, city),
+      builder: (BuildContext context, AsyncSnapshot<Map<String, dynamic>> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const CircularProgressIndicator();
+        } else if (snapshot.hasError) {
+          return Text(
+            'Error loading weather data: ${snapshot.error}',
+            style: const TextStyle(color: Colors.red),
+          );
+        } else if (snapshot.hasData) {
+          Map<String, dynamic> content = snapshot.data!;
           return Container(
-            margin: const EdgeInsets.fromLTRB(30.0, 250.0, 0.0, 0.0),
+            margin: const EdgeInsets.fromLTRB(30.0, 50.0, 0.0, 0.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ListTile(
                   title: Text(
-                    content['main']['temp'].toString() + "F",
-                    style: TextStyle(
+                    '${content['main']['temp']}F',
+                    style: const TextStyle(
                       fontSize: 49.9,
                       fontStyle: FontStyle.normal,
                       color: Colors.white,
@@ -91,44 +59,127 @@ class _climateState extends State<climate> {
                     ),
                   ),
                   subtitle: Text(
-                    "Humidity: ${content['main']['humidity'].toString()}\n"
-                        "Min: ${content['main']['temp_min'].toString()}F\n"
-                        "Max: ${content['main']['temp_max'].toString()}F\n",
+                    "Humidity: ${content['main']['humidity']}%\n"
+                        "Min: ${content['main']['temp_min']}F\n"
+                        "Max: ${content['main']['temp_max']}F\n",
                     style: extraData(),
                   ),
                 ),
               ],
             ),
           );
-        } else if (snapshot.hasError) {
-          return Text(
-            'Error loading weather data',
-            style: TextStyle(color: Colors.red),
-          );
         } else {
-          return CircularProgressIndicator();
+          return const Text(
+            'No weather data available',
+            style: TextStyle(color: Colors.grey),
+          );
         }
       },
+    );
+  }
+
+  void _searchCity() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true, // Allows the bottom sheet to resize when the keyboard opens
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16.0,
+            right: 16.0,
+            top: 16.0,
+            // Add padding for the keyboard to avoid overlap
+            bottom: MediaQuery.of(context).viewInsets.bottom + 16.0,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: cityController,
+                  decoration: const InputDecoration(
+                    labelText: 'Enter City Name',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    if (cityController.text.isNotEmpty) {
+                      setState(() {
+                        cityName = cityController.text;
+                      });
+                      Navigator.pop(context); // Close the bottom sheet
+                    }
+                  },
+                  child: const Text('Get Weather'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('ClimateApp'),
+        backgroundColor: Colors.red,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: _searchCity, // Open the search city input
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          Center(
+            child: Image.asset(
+              'images/umbrella.jpeg',
+              height: 1200.0,
+              width: 590.0,
+              fit: BoxFit.fill,
+            ),
+          ),
+          Container(
+            alignment: Alignment.topRight,
+            margin: const EdgeInsets.fromLTRB(0.0, 10.9, 20.9, 0.0),
+            child: Text(
+              cityName,
+              style: cityStyle(),
+            ),
+          ),
+          Center(
+            child: Image.asset('images/lightrain.png'),
+
+          ),
+          Container(
+            margin: const EdgeInsets.fromLTRB(30.0, 390.0, 20.9, 0.0),
+            child: updateTempWidget(cityName),
+          ),
+        ],
+      ),
     );
   }
 }
 
 TextStyle cityStyle() {
-  return TextStyle(
+  return const TextStyle(
     color: Colors.white,
     fontSize: 22.9,
     fontStyle: FontStyle.italic,
   );
 }
-TextStyle tempStyle(){
-  return TextStyle(
-    color: Colors.white,
-    fontStyle: FontStyle.normal,
-    fontWeight: FontWeight.w500,
-    fontSize: 49.9
-  );
-}
+
 TextStyle extraData() {
-  return new TextStyle(
-      color: Colors.white70, fontStyle: FontStyle.normal, fontSize: 17.0);
+  return const TextStyle(
+    color: Colors.white70,
+    fontStyle: FontStyle.normal,
+    fontSize: 17.0,
+  );
 }
