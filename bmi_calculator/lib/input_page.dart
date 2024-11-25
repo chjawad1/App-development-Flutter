@@ -13,6 +13,8 @@ class InputPage extends StatefulWidget {
 class _InputPageState extends State<InputPage> {
   Gender? selectedGender;
   double height = 170.0; // Default height value in cm
+  int weight = 60; // Default weight value in kg
+  int age = 25; // Default age value in years
 
   // Function object for handling gender selection
   void Function()? onGenderTap(Gender gender) {
@@ -63,7 +65,6 @@ class _InputPageState extends State<InputPage> {
               ],
             ),
           ),
-          // Slider for height selection
           Expanded(
             child: RepeatContainerCode(
               colors: kActiveCardColor,
@@ -105,7 +106,7 @@ class _InputPageState extends State<InputPage> {
                       thumbColor: Colors.pink,
                       overlayColor: Colors.pink.withOpacity(0.2),
                       thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 15.0),
-                      overlayShape: const RoundSliderOverlayShape(overlayRadius: 20.0),
+                      overlayShape: const RoundSliderOverlayShape(overlayRadius: 10.0),
                     ),
                     child: Slider(
                       value: height,
@@ -125,25 +126,138 @@ class _InputPageState extends State<InputPage> {
           Expanded(
             child: Row(
               children: [
+                // Left container for Weight
                 Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.all(15.0),
-                    decoration: BoxDecoration(
-                      color: kActiveCardColor,
-                      borderRadius: BorderRadius.circular(10.0),
+                  child: RepeatContainerCode(
+                    colors: kActiveCardColor,
+                    cardWidget: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          "WEIGHT",
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            color: Color(0xFF8D8E98),
+                          ),
+                        ),
+                        Text(
+                          "$weight",
+                          style: const TextStyle(
+                            fontSize: 50.0,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  if (weight > 1) weight--;
+                                });
+                              },
+                              style: ElevatedButton.styleFrom(
+                                shape: const CircleBorder(),
+                                padding: const EdgeInsets.all(5.0),
+                                backgroundColor: const Color(0xFF4C4F5E),
+                              ),
+                              child: const Icon(Icons.remove, color: Colors.white),
+                            ),
+                            const SizedBox(width: 10.0),
+                            ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  weight++;
+                                });
+                              },
+                              style: ElevatedButton.styleFrom(
+                                shape: const CircleBorder(),
+                                padding: const EdgeInsets.all(5.0),
+                                backgroundColor: const Color(0xFF4C4F5E),
+                              ),
+                              child: const Icon(Icons.add, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
+                // Right container for Age
                 Expanded(
-                  child: Container(
-                    margin: const EdgeInsets.all(15.0),
-                    decoration: BoxDecoration(
-                      color: kActiveCardColor,
-                      borderRadius: BorderRadius.circular(10.0),
+                  child: RepeatContainerCode(
+                    colors: kActiveCardColor,
+                    cardWidget: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          "AGE",
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            color: Color(0xFF8D8E98),
+                          ),
+                        ),
+                        Text(
+                          "$age",
+                          style: const TextStyle(
+                            fontSize: 50.0,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  if (age > 1) age--;
+                                });
+                              },
+                              style: ElevatedButton.styleFrom(
+                                shape: const CircleBorder(),
+                                padding: const EdgeInsets.all(7.0),
+                                backgroundColor: const Color(0xFF4C4F5E),
+                              ),
+                              child: const Icon(Icons.remove, color: Colors.white),
+                            ),
+                            const SizedBox(width: 10.0),
+                            ElevatedButton(
+                              onPressed: () {
+                                setState(() {
+                                  age++;
+                                });
+                              },
+                              style: ElevatedButton.styleFrom(
+                                shape: const CircleBorder(),
+                                padding: const EdgeInsets.all(7.0),
+                                backgroundColor: const Color(0xFF4C4F5E),
+                              ),
+                              child: const Icon(Icons.add, color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ),
               ],
+            ),
+          ),
+          // Additional container at the bottom
+          Container(
+            margin: const EdgeInsets.only(top: 10.0, bottom: 20.0),
+            width: double.infinity,
+            height: 60.0,
+            color: Colors.pink,
+            child: Center(
+              child: Text(
+                "CALCULATE BMI",
+                style: const TextStyle(
+                  fontSize: 25.0,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
         ],
